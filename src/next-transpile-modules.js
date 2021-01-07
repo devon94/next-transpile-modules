@@ -16,8 +16,8 @@ const CWD = process.cwd();
  * Our own Node.js resolver that can ignore symlinks resolution and  can support
  * PnP
  */
-const resolve = enhancedResolve.create.sync({
-  symlinks: false,
+const createResolver = (symlinks) => enhancedResolve.create.sync({
+  symlinks,
   extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.css', '.scss', '.sass'],
   mainFields: ['main', 'source'],
 });
@@ -44,7 +44,7 @@ const regexEqual = (x, y) => {
  * Return the root path (package.json directory) of a given module
  * @param {string} module
  */
-const getPackageRootDirectory = (module) => {
+const getPackageRootDirectory = (module, resolve) => {
   let packageDirectory;
   let packageRootDirectory;
 
@@ -82,8 +82,9 @@ const getPackageRootDirectory = (module) => {
  * Resolve modules to their real paths
  * @param {string[]} modules
  */
-const generateModulesPaths = (modules) => {
-  const packagesPaths = modules.map(getPackageRootDirectory);
+const generateModulesPaths = (modules, resolveSymlinks) => {
+  const resolve = createResolver(resolveSymlinks)
+  const packagesPaths = modules.map((m) => getPackageRootDirectory(m, resolve));
 
   return packagesPaths;
 };
@@ -112,7 +113,7 @@ const withTmInitializer = (modules = [], options = {}) => {
 
     const logger = createLogger(debug);
 
-    const modulesPaths = generateModulesPaths(modules);
+    const modulesPaths = generateModulesPaths(modules, resolveSymlinks);
 
     if (isWebpack5) logger(`WARNING experimental Webpack 5 support enabled`, true);
 
